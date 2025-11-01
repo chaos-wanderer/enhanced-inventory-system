@@ -43,6 +43,18 @@ public class Inventory {
         return searchProductById(id) != null;
     }
 
+    public List<Product> searchProductsById(String id) {
+        List<Product> matches = new ArrayList<>();
+
+        for (Product product : inventory.values()) {
+            if (product.getId().toLowerCase().contains(id)) {
+                matches.add(product);
+            }
+        }
+
+        return matches;
+    }
+
     public List<Product> searchProductsbyName(String name) {
         List<Product> matches = new ArrayList<>();
 

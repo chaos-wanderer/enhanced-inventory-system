@@ -22,10 +22,11 @@ public class InventoryUI {
         while (true) {
             switch (state) {
                 case MAIN_MENU -> displayMainMenu();
+                case VIEW_PRODUCTS -> listAllProducts(inventory.getAllProducts());
                 case ADD_PRODUCT -> addProduct();
                 case UPDATE_PRODUCT -> updateProduct();
-//                case REMOVE_PRODUCT -> removeProduct();
-//                case SEARCH_PRODUCT -> searchProduct();
+                case REMOVE_PRODUCT -> removeProduct();
+                case SEARCH_PRODUCT -> searchProduct();
 //                case DISPLAY_SUMMARY -> displaySummary();
                 case EXIT_PROGRAM -> {
                     exitProgram();
@@ -61,11 +62,11 @@ public class InventoryUI {
 
     private void handleCommand(String choice) {
         switch (choice) {
-            case "1" -> listAllProducts(inventory.getAllProducts());
-            case "2" -> addProduct();
-            case "3" -> updateProduct();
-//            case "4" -> removeProduct();
-//            case "5" -> searchProducts();
+            case "1" -> state = MenuState.VIEW_PRODUCTS;
+            case "2" -> state = MenuState.ADD_PRODUCT;
+            case "3" -> state = MenuState.UPDATE_PRODUCT;
+            case "4" -> state = MenuState.REMOVE_PRODUCT;
+            case "5" -> state = MenuState.SEARCH_PRODUCT;
 //            case "6" -> displaySummary();
             default -> {
                 System.out.println("\nInvalid input - Returning...");
@@ -78,7 +79,6 @@ public class InventoryUI {
     // region List All Products
     /* ------------------------------------- List All Products ------------------------------------- */
     private void listAllProducts(List<Product> products) {
-        // display products
         clearConsole();
         boolean viewing = true;
 
@@ -88,7 +88,7 @@ public class InventoryUI {
                 break;
             }
 
-            displayProductList(products);
+            displayProductListTableFormat(products, "CURRENT INVENTORY");
 
             String choice = handleListMenu();
 
@@ -96,13 +96,16 @@ public class InventoryUI {
                 case "1" -> {
                     clearConsole();
                     products = handleSortOptions(products);
+                    if (products == null) {
+                        break;
+                    }
                     state = MenuState.VIEW_PRODUCTS;
                 }
                 case "2" -> state = MenuState.MAIN_MENU;
                 case "3" -> state = MenuState.EXIT_PROGRAM;
                 default -> {
                     state = MenuState.MAIN_MENU;
-                    System.out.println("Invalid option - Returning to Main Menu...");
+                    System.out.println("\nInvalid option - Returning to Main Menu...");
                     pause();
                 }
             }
@@ -114,8 +117,8 @@ public class InventoryUI {
     }
 
     // prints all products in a table format
-    private void displayProductList(List<Product> products) {
-        printHeader("CURRENT INVENTORY");
+    private void displayProductListTableFormat(List<Product> products, String header) {
+        printHeader(header);
         System.out.printf("%-10s | %-35s | %-4s | %-10s%n", "ID", "Name", "Qty", "Price");
         printSeparator();
 
@@ -160,6 +163,7 @@ public class InventoryUI {
         String choice = sanitizeString(scanner.nextLine());
 
         if (choice.equals("0")) {
+            state = MenuState.EXIT_PROGRAM;
             exitProgram();
         }
 
@@ -175,9 +179,12 @@ public class InventoryUI {
             case "3" -> inventory.sortByPrice(true);
             case "4" -> inventory.sortByPrice(false);
             case "5" -> inventory.getAllProducts();
-            case "6" -> null; // Return to Main Menu option
+            case "6" -> {
+                state = MenuState.MAIN_MENU;
+                yield null;
+            } // Return to Main Menu option
             default -> {
-                System.out.println("Invalid option — Keeping current order.");
+                System.out.println("\nInvalid option — Keeping current order.");
                 pause();
                 yield inventory.getAllProducts();
             }
@@ -197,6 +204,10 @@ public class InventoryUI {
             Product product = promptForProductDetails();
             if (product == null) {
                 state = MenuState.MAIN_MENU;
+                return;
+            }
+
+            if (!getConfirmation()) {
                 return;
             }
 
@@ -231,7 +242,6 @@ public class InventoryUI {
         }
     }
 
-    // TODO add press enter to skip?
     private Product promptForProductDetails() {
         System.out.print("Enter Product ID (press Enter to return): ");
         String id = sanitizeString(scanner.nextLine());
@@ -312,6 +322,7 @@ public class InventoryUI {
     }
     // endregion
 
+    // region Update Products
     /* ------------------------------------- Update Products ------------------------------------- */
     private void updateProduct() {
         boolean updating = true;
@@ -323,7 +334,6 @@ public class InventoryUI {
 
             System.out.print("Enter Product ID to update (press Enter to return): ");
             String id = sanitizeString(scanner.nextLine());
-            System.out.println();
             if (id.isEmpty()) {
                 System.out.println("Returning to Main Menu...");
                 state = MenuState.MAIN_MENU;
@@ -360,15 +370,18 @@ public class InventoryUI {
             String choice = sanitizeString(scanner.nextLine());
 
             switch (choice) {
-                case "1" -> {
-                }
-                case "2" -> updating = false;
-                case "3" -> exitProgram();
+                case "1" -> state = MenuState.UPDATE_PRODUCT;
+                case "2" -> state = MenuState.MAIN_MENU;
+                case "3" -> state = MenuState.EXIT_PROGRAM;
                 default -> {
+                    state = MenuState.MAIN_MENU;
                     System.out.println("Invalid option — Returning to Main Menu...");
                     pause();
-                    updating = false;
                 }
+            }
+
+            if (state != MenuState.UPDATE_PRODUCT) {
+                updating = false;
             }
         }
     }
@@ -407,9 +420,13 @@ public class InventoryUI {
             case "4" -> increaseProductQuantity(product);
             case "5" -> decreaseProductQuantity(product);
             case "6" -> {
+                state = MenuState.MAIN_MENU;
                 return false;
             }
-            case "0" -> exitProgram();
+            case "0" -> {
+                state = MenuState.EXIT_PROGRAM;
+                exitProgram();
+            }
             default -> {
                 System.out.println("Invalid option – Returning to Main Menu...");
                 pause();
@@ -430,6 +447,10 @@ public class InventoryUI {
             return;
         }
 
+        if (!getConfirmation()) {
+            return;
+        }
+
         System.out.println();
 
         product.setName(newName);
@@ -439,8 +460,11 @@ public class InventoryUI {
     private void updateProductPrice(Product product) {
         System.out.print("Enter new product price (press Enter to skip): ");
         BigDecimal newPrice = readPriceInput();
-
         if (newPrice == null) {
+            return;
+        }
+
+        if (!getConfirmation()) {
             return;
         }
 
@@ -453,8 +477,11 @@ public class InventoryUI {
     private void updateProductQuantity(Product product) {
         System.out.print("Enter new quantity (press Enter to skip): ");
         int newQuantity = readIntInput("quantity");
-
         if (newQuantity == -1) {
+            return;
+        }
+
+        if (!getConfirmation()) {
             return;
         }
 
@@ -467,8 +494,11 @@ public class InventoryUI {
     private void increaseProductQuantity(Product product) {
         System.out.print("Enter quantity to add to current stock (press Enter to skip): ");
         int amount = readIntInput("quantity");
-
         if (amount == -1) {
+            return;
+        }
+
+        if (!getConfirmation()) {
             return;
         }
 
@@ -481,8 +511,11 @@ public class InventoryUI {
     private void decreaseProductQuantity(Product product) {
         System.out.print("Enter quantity to subtract to current stock (press Enter to skip): ");
         int amount = readIntInput("quantity");
-
         if (amount == -1) {
+            return;
+        }
+
+        if (!getConfirmation()) {
             return;
         }
 
@@ -491,140 +524,255 @@ public class InventoryUI {
         product.decreaseQuantity(amount);
         System.out.println("Product [" + product.getId() + "] quantity updated to '" + product.getQuantity() + "'.");
     }
+    // endregion
 
-
+    // region Remove Products
     /* ------------------------------------- Remove Products ------------------------------------- */
-    private void removeProduct() throws InterruptedException {
+    private void removeProduct() {
         boolean removing = true;
 
         while (removing) {
             clearConsole();
-            System.out.println("------------------------------------------------------------------");
-            System.out.println("REMOVE PRODUCT");
-            System.out.println("------------------------------------------------------------------");
-            System.out.print("Enter Product ID to remove (press Enter to return): ");
+            printHeader("REMOVE PRODUCT");
 
+            System.out.print("Enter Product ID to remove (press Enter to return): ");
             String id = sanitizeString(scanner.nextLine());
 
-            System.out.println();
+            if (id.isEmpty()) {
+                state = MenuState.MAIN_MENU;
+                break;
+            }
+
             Product product = inventory.searchProductById(id);
 
             if (product == null) {
-                System.out.println("Product ID " + "'" + id + "'" + " does not exists!");
-                System.out.println("Returning...");
-                Thread.sleep(2000);
+                System.out.println("\nProduct ID " + "[" + id + "]" + " not found!");
+                printSeparator();
+                pause();
                 continue;
             }
 
-            if (id.isEmpty()) {
-                break;
+            printSeparator();
+
+            boolean successful = displayRemoveProductConfirmation(product);
+
+            if (!successful) {
+                pause();
+                continue;
             }
 
-            System.out.print("Are you sure you want to remove '" + product.getName() + "' ? (y/n): ");
-            String choice = sanitizeString(scanner.nextLine());
+            System.out.println("\nProduct removed successfully!");
+            printSeparator();
+            pause();
+            clearConsole();
+            printSeparator();
 
-            if (choice.equals("y")) {
-                this.inventory.removeProduct(id);
-            } else {
-                System.out.println("Returning...");
-                Thread.sleep(2000);
-                break;
-            }
-
-            System.out.println("------------------------------------------------------------------");
-            System.out.println("Product removed successfully!");
-            Thread.sleep(2000);
-            System.out.println();
-            System.out.println("[1] Remove Another Product");
-            System.out.println("[2] Return to Main Menu");
-            System.out.println("[3] Exit Program");
-            System.out.println("------------------------------------------------------------------");
-            System.out.print("Select an option: ");
-            String input = sanitizeString(scanner.nextLine());
+            String input = handleRemoveAnotherProductMenu();
 
             switch (input) {
-                case "1" -> {
+                case "1" -> state = MenuState.REMOVE_PRODUCT;
+                case "2" -> state = MenuState.MAIN_MENU;
+                case "3" -> {
+                    state = MenuState.EXIT_PROGRAM;
                 }
-                case "2" -> removing = false;
-                case "3" -> exitProgram();
                 default -> {
+                    state = MenuState.MAIN_MENU;
                     System.out.println("Invalid option - Returning to Main Menu...");
-                    Thread.sleep(2000);
-                    removing = false;
+                    pause();
                 }
+            }
+
+            if (state != MenuState.REMOVE_PRODUCT) {
+                removing = false;
             }
         }
     }
 
+    private boolean displayRemoveProductConfirmation(Product product) {
+        System.out.print("Are you sure you want to remove " + "[" + product.getId() + "] " + "'" + product.getName() + "' ? (y/n): ");
+        String choice = sanitizeString(scanner.nextLine());
+
+        if (choice.equals("y")) {
+            this.inventory.removeProduct(product.getId());
+            return true;
+        } else {
+            printSeparator();
+            return false;
+        }
+    }
+
+    private String handleRemoveAnotherProductMenu() {
+        System.out.println("[1] Remove Another Product");
+        System.out.println("[2] Return to Main Menu");
+        System.out.println("[3] Exit Program");
+        System.out.println("------------------------------------------------------------------");
+        System.out.print("Select an option: ");
+        return sanitizeString(scanner.nextLine());
+    }
+
+    // endregion
+
+    // region Search Products
     /* ------------------------------------- Search Products ------------------------------------- */
-    private void searchProduct() throws InterruptedException {
+    private void searchProduct() {
         boolean searching = true;
+
         while (searching) {
             clearConsole();
 
-            System.out.println("------------------------------------------------------------------");
-            System.out.println("SEARCH PRODUCTS");
-            System.out.println("------------------------------------------------------------------");
+            printHeader("SEARCH PRODUCT");
 
-            if (inventory.getInventory().isEmpty() || inventory.getInventory() == null) {
-                System.out.println("The inventory is empty.");
-                System.out.println("Returning...");
-                Thread.sleep(2000);
-                break;
+            if (isInventoryEmpty()) {
+                pause();
+                return;
             }
 
-            System.out.print("Enter keyword: ");
-            String keyword = sanitizeString(scanner.nextLine());
+            // handle repeat search menu if users choose to (press Enter to return)
+            switch (handleSearchMenu()) {
+                case MenuState.SEARCH_PRODUCT -> {
+                    continue;
+                }
 
-            if (keyword.isEmpty()) {
-                break;
+                case MenuState.MAIN_MENU -> {
+                    state = MenuState.MAIN_MENU;
+                    return;
+                }
+
+                case MenuState.EXIT_PROGRAM -> {
+                    state = MenuState.EXIT_PROGRAM;
+                    return;
+                }
+
+                case null, default -> {
+                }
             }
 
-            System.out.println("------------------------------------------------------------------");
-            System.out.println("Results:");
-            System.out.println("------------------------------------------------------------------");
-            System.out.printf("%-10s | %-35s | %-4s | %-10s%n", "ID", "Name", "Qty", "Price");
-            System.out.println("------------------------------------------------------------------");
+            clearConsole();
 
-            List<Product> products = inventory.searchProductsbyName(keyword);
-
-            if (products.isEmpty()) {
-                System.out.println("No products found");
-                System.out.println("Returning...");
-                Thread.sleep(2000);
-                break;
-            }
-
-            for (Product product : products) {
-                System.out.printf("%-10s | %-35s | %-4d | $%-10s%n",
-                        product.getId(),
-                        product.getName(),
-                        product.getQuantity(),
-                        product.getPrice().toPlainString());
-            }
-
-            System.out.println("------------------------------------------------------------------");
-            System.out.println("[1] Search Again");
-            System.out.println("[2] Return to Main Menu");
-            System.out.println("[3] Exit Program");
-            System.out.println("------------------------------------------------------------------");
-            System.out.print("Select an option: ");
-            String choice = sanitizeString(scanner.nextLine());
+            String choice = handleSearchAgainMenu();
 
             switch (choice) {
-                case "1" -> {
-                }
-                case "2" -> searching = false;
-                case "3" -> exitProgram();
+                case "1" -> state = MenuState.SEARCH_PRODUCT;
+                case "2" -> state = MenuState.MAIN_MENU;
+                case "3" -> state = MenuState.EXIT_PROGRAM;
                 default -> {
-                    System.out.println("Invalid option - Returning to Main Menu...");
-                    Thread.sleep(2000);
-                    searching = false;
+                    state = MenuState.MAIN_MENU;
+                    System.out.println("\nInvalid option - Returning to Main Menu...");
+                    pause();
                 }
+            }
+
+            if (state != MenuState.SEARCH_PRODUCT) {
+                searching = false;
             }
         }
     }
 
+    private boolean isInventoryEmpty() {
+        if (inventory.getInventory().isEmpty() || inventory.getInventory() == null) {
+            System.out.println("The inventory is empty.");
+            System.out.println("Returning...");
+            printSeparator();
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private String displaySearchMenu() {
+        System.out.println("[1] Search by ID");
+        System.out.println("[2] Search by Name");
+        System.out.println("[3] Return to Main Menu");
+        System.out.println("[4] Exit Program");
+        printSeparator();
+        System.out.print("Select an option: ");
+        String choice = sanitizeString(scanner.nextLine());
+
+        printSeparator();
+        return choice;
+    }
+
+    private MenuState handleSearchMenu() {
+        boolean repeatSearchMenu = true;
+
+        switch (displaySearchMenu()) {
+            case "1" -> repeatSearchMenu = searchProductsById();
+            case "2" -> repeatSearchMenu = searchProductsByName();
+            case "3" -> {
+                return MenuState.MAIN_MENU;
+            }
+            case "4" -> {
+                return MenuState.EXIT_PROGRAM;
+            }
+            default -> {
+                System.out.println("\nInvalid option – Please select a valid option.");
+                pause();
+            }
+        }
+
+        if (repeatSearchMenu) {
+            return MenuState.SEARCH_PRODUCT;
+        }
+
+        return null;
+    }
+
+    // return value used for handleSearchMenu()
+    private boolean searchProductsById() {
+        System.out.print("Enter Product ID (press Enter to return): ");
+        String id = sanitizeString(scanner.nextLine());
+
+        if (id.isEmpty()) {
+            return true;
+        }
+
+        List<Product> products = inventory.searchProductsById(id);
+
+        displaySearchResults(products);
+        return false;
+    }
+
+    private boolean searchProductsByName() {
+        System.out.print("Enter keyword (press Enter to return): ");
+        String name = sanitizeString(scanner.nextLine());
+
+        if (name.isEmpty()) {
+            return true;
+        }
+
+        List<Product> products = inventory.searchProductsbyName(name);
+
+        displaySearchResults(products);
+        return false;
+    }
+
+    private void displaySearchResults(List<Product> products) {
+        if (products.isEmpty()) {
+            System.out.println("\nNo products found");
+            System.out.println("Returning...");
+            printSeparator();
+            pause();
+            return;
+        }
+
+        displayProductListTableFormat(products, "RESULTS");
+        pause();
+    }
+
+    private String handleSearchAgainMenu() {
+        printSeparator();
+        System.out.println("[1] Search Again");
+        System.out.println("[2] Return to Main Menu");
+        System.out.println("[3] Exit Program");
+        printSeparator();
+        System.out.print("Select an option: ");
+
+        return sanitizeString(scanner.nextLine());
+    }
+
+    // endregion
+
+    // region Display Summary
     /* ------------------------------------- Display Summary ------------------------------------- */
     private void displaySummary() throws InterruptedException {
         clearConsole();
@@ -644,14 +792,19 @@ public class InventoryUI {
         switch (choice) {
             case "1" -> {
             }
-            case "2" -> exitProgram();
+            case "2" -> {
+                state = MenuState.EXIT_PROGRAM;
+                exitProgram();
+            }
             default -> {
                 System.out.println("Invalid option - Returning to Main Menu...");
                 Thread.sleep(2000);
             }
         }
     }
+    // endregion
 
+    //region Utility Methods
     /* ------------------------------------- Utility Methods ------------------------------------- */
     private static String sanitizeString(String string) {
         if (string == null) {
@@ -675,6 +828,11 @@ public class InventoryUI {
                 .trim()
                 .replaceAll("\\s+", " ")
                 .replaceAll("[^a-zA-Z0-9\\s\\-]", "");
+    }
+
+    private boolean getConfirmation() {
+        System.out.print("Are you sure (y/n): ");
+        return sanitizeString(scanner.nextLine()).equals("y");
     }
 
     private static void printSeparator() {
@@ -706,4 +864,5 @@ public class InventoryUI {
         System.out.println("Program closing...");
         System.exit(0);
     }
+    // endregion
 }
