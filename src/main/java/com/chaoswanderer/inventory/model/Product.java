@@ -39,7 +39,27 @@ public class Product {
     }
 
     public void setQuantity(int quantity) {
+        if (quantity < 0) {
+            return;
+        }
+
         this.quantity = quantity;
+    }
+
+    public void increaseQuantity(int amount) {
+        if (amount < 0) {
+            return;
+        }
+
+        this.quantity += amount;
+    }
+
+    public void decreaseQuantity(int amount) {
+        if (amount < 0) {
+            return;
+        }
+
+        this.quantity -= amount;
     }
 
     public BigDecimal getPrice() {
@@ -54,10 +74,6 @@ public class Product {
     public BigDecimal totalPrice() {
         return price.multiply(BigDecimal.valueOf(quantity))
                 .setScale(2, RoundingMode.HALF_UP);
-    }
-
-    public void addQuantity(int quantity) {
-        this.quantity += quantity;
     }
 
     // Overrides

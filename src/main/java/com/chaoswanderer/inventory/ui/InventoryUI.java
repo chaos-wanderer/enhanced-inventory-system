@@ -11,44 +11,52 @@ import java.util.Scanner;
 public class InventoryUI {
     private final Inventory inventory;
     private Scanner scanner;
+    private MenuState state = MenuState.MAIN_MENU;
 
     public InventoryUI(Inventory inventory, Scanner scanner) {
         this.inventory = inventory;
         this.scanner = scanner;
     }
 
-    // fake clear console
-    private static void clearConsole() {
-        for (int i = 0; i < 50; i++) {
-            System.out.println();
+    public void start() {
+        while (true) {
+            switch (state) {
+                case MAIN_MENU -> displayMainMenu();
+                case ADD_PRODUCT -> addProduct();
+                case UPDATE_PRODUCT -> updateProduct();
+//                case REMOVE_PRODUCT -> removeProduct();
+//                case SEARCH_PRODUCT -> searchProduct();
+//                case DISPLAY_SUMMARY -> displaySummary();
+                case EXIT_PROGRAM -> {
+                    exitProgram();
+                    return;
+                }
+            }
         }
     }
 
-    public void start() {
-        while (true) {
-            clearConsole();
-            System.out.println("==================================================================");
-            System.out.println("                    INVENTORY MANAGEMENT SYSTEM                   ");
-            System.out.println("==================================================================");
-            System.out.println("[1] View Products");
-            System.out.println("[2] Add Product");
-            System.out.println("[3] Update Product");
-            System.out.println("[4] Remove Product");
-            System.out.println("[5] Search Products");
-            System.out.println("[6] View Summary");
-            System.out.println("[0] Exit");
-            System.out.println("------------------------------------------------------------------");
-            System.out.print("Select an option: ");
-            String choice = sanitizeString(scanner.nextLine());
+    private void displayMainMenu() {
+        clearConsole();
+        System.out.println("==================================================================");
+        System.out.println("                    INVENTORY MANAGEMENT SYSTEM                   ");
+        System.out.println("==================================================================");
+        System.out.println("[1] View Products");
+        System.out.println("[2] Add Product");
+        System.out.println("[3] Update Product");
+        System.out.println("[4] Remove Product");
+        System.out.println("[5] Search Product");
+        System.out.println("[6] View Summary");
+        System.out.println("[0] Exit");
+        printSeparator();
+        System.out.print("Select an option: ");
+        String choice = sanitizeString(scanner.nextLine());
 
-            if (choice.equals("0")) {
-                break;
-            }
-
-            handleCommand(choice);
+        if (choice.equals("0")) {
+            state = MenuState.EXIT_PROGRAM;
+            return;
         }
 
-        exitProgram();
+        handleCommand(choice);
     }
 
     private void handleCommand(String choice) {
@@ -56,17 +64,18 @@ public class InventoryUI {
             case "1" -> listAllProducts(inventory.getAllProducts());
             case "2" -> addProduct();
             case "3" -> updateProduct();
-            case "4" -> removeProduct();
-            case "5" -> searchProducts();
-            case "6" -> displaySummary();
+//            case "4" -> removeProduct();
+//            case "5" -> searchProducts();
+//            case "6" -> displaySummary();
             default -> {
-                System.out.println("\nInvalid input - try again!");
-                Thread.sleep(2000);
+                System.out.println("\nInvalid input - Returning...");
+                pause();
             }
         }
 
     }
 
+    // region List All Products
     /* ------------------------------------- List All Products ------------------------------------- */
     private void listAllProducts(List<Product> products) {
         // display products
@@ -74,6 +83,11 @@ public class InventoryUI {
         boolean viewing = true;
 
         while (viewing) {
+
+            if (products == null) {
+                break;
+            }
+
             displayProductList(products);
 
             String choice = handleListMenu();
@@ -82,25 +96,28 @@ public class InventoryUI {
                 case "1" -> {
                     clearConsole();
                     products = handleSortOptions(products);
+                    state = MenuState.VIEW_PRODUCTS;
                 }
-                case "2" -> viewing = false;
-                case "3" -> exitProgram();
+                case "2" -> state = MenuState.MAIN_MENU;
+                case "3" -> state = MenuState.EXIT_PROGRAM;
                 default -> {
+                    state = MenuState.MAIN_MENU;
                     System.out.println("Invalid option - Returning to Main Menu...");
-                    viewing = false;
                     pause();
                 }
+            }
+
+            if (state != MenuState.VIEW_PRODUCTS) {
+                viewing = false;
             }
         }
     }
 
     // prints all products in a table format
     private void displayProductList(List<Product> products) {
-        System.out.println("------------------------------------------------------------------");
-        System.out.println("CURRENT INVENTORY");
-        System.out.println("------------------------------------------------------------------");
+        printHeader("CURRENT INVENTORY");
         System.out.printf("%-10s | %-35s | %-4s | %-10s%n", "ID", "Name", "Qty", "Price");
-        System.out.println("------------------------------------------------------------------");
+        printSeparator();
 
         for (Product product : products) {
             System.out.printf("%-10s | %-35s | %-4d | $%-10s%n",
@@ -110,7 +127,7 @@ public class InventoryUI {
                     product.getPrice().toPlainString());
         }
 
-        System.out.println("------------------------------------------------------------------");
+        printSeparator();
     }
 
     // shows menu options while viewing products list
@@ -118,7 +135,7 @@ public class InventoryUI {
         System.out.println("[1] Sort Options");
         System.out.println("[2] Return to Main Menu");
         System.out.println("[3] Exit Program");
-        System.out.println("------------------------------------------------------------------");
+        printSeparator();
         System.out.print("Select an option: ");
 
         return sanitizeString(scanner.nextLine());
@@ -126,18 +143,19 @@ public class InventoryUI {
 
     // handles sort options
     private List<Product> handleSortOptions(List<Product> products) {
-        System.out.println("------------------------------------------------------------------");
+        printSeparator();
         System.out.println("SORT OPTIONS");
-        System.out.println("------------------------------------------------------------------");
+        printSeparator();
         System.out.println("[1] Sort by Name (A-Z)");
         System.out.println("[2] Sort by Name (Z-A)");
         System.out.println("[3] Sort by Price (Lowest to Highest)");
         System.out.println("[4] Sort by Price (Highest to Lowest)");
         System.out.println("[5] Default");
+        System.out.println("[6] Return to Main Menu");
 //        System.out.println("[5] Sort by Date (Newest First)"); // will be added in Enhanced Inventory Management
 //        System.out.println("[6] Sort by Date (Oldest First)"); // TODO sort by date
-        System.out.println("[0] Exit");
-        System.out.println("------------------------------------------------------------------");
+        System.out.println("[0] Exit Program");
+        printSeparator();
         System.out.print("Select an option: ");
         String choice = sanitizeString(scanner.nextLine());
 
@@ -148,6 +166,7 @@ public class InventoryUI {
         return getSortedList(choice, products);
     }
 
+    // TODO SORT BY ID, AND DATE
     // returns the sorted list based on choice from handleSortOptions()
     private List<Product> getSortedList(String choice, List<Product> products) {
         return switch (choice) {
@@ -155,23 +174,33 @@ public class InventoryUI {
             case "2" -> inventory.sortByName(false);
             case "3" -> inventory.sortByPrice(true);
             case "4" -> inventory.sortByPrice(false);
-            case "5" -> products;
+            case "5" -> inventory.getAllProducts();
+            case "6" -> null; // Return to Main Menu option
             default -> {
-                System.out.println("Invalid option - Keeping current order.");
-                yield products;
+                System.out.println("Invalid option — Keeping current order.");
+                pause();
+                yield inventory.getAllProducts();
             }
         };
     }
+    // endregion
 
+    // region Add Products
     /* ------------------------------------- Add Products ---------------------------------------- */
     private void addProduct() {
-        clearConsole();
         boolean adding = true;
 
         while (adding) {
-            displayAddProductHeader();
+            clearConsole();
+            printHeader("ADD PRODUCT");
 
             Product product = promptForProductDetails();
+            if (product == null) {
+                state = MenuState.MAIN_MENU;
+                return;
+            }
+
+            printSeparator();
 
             if (inventory.addProduct(product)) {
                 System.out.println("Product '" + product.getName() + "' added successfully!");
@@ -179,48 +208,59 @@ public class InventoryUI {
                 System.out.println("Product already exists!");
             }
 
-            pause();
             System.out.println();
+            pause();
+            clearConsole();
 
-            String choice = displayAddProductMenu();
+            String choice = displayAddAnotherProductMenu();
 
             switch (choice) {
-                case "1" -> {
-                }
-                case "2" -> adding = false;
-                case "3" -> exitProgram();
+                case "1" -> state = MenuState.ADD_PRODUCT;
+                case "2" -> state = MenuState.MAIN_MENU;
+                case "3" -> state = MenuState.EXIT_PROGRAM;
                 default -> {
-                    System.out.println("Invalid option - Returning to Main Menu...");
+                    System.out.println("\nInvalid option - Returning to Main Menu...");
+                    state = MenuState.MAIN_MENU;
                     pause();
-                    adding = false;
                 }
+            }
+
+            if (state != MenuState.ADD_PRODUCT) {
+                adding = false;
             }
         }
     }
 
-    private void displayAddProductHeader() {
-        System.out.println("------------------------------------------------------------------");
-        System.out.println("ADD PRODUCT");
-        System.out.println("------------------------------------------------------------------");
-    }
-
+    // TODO add press enter to skip?
     private Product promptForProductDetails() {
-        System.out.print("Enter Product ID: ");
+        System.out.print("Enter Product ID (press Enter to return): ");
         String id = sanitizeString(scanner.nextLine());
+        if (id.isEmpty()) {
+            return null;
+        }
 
-        System.out.print("Enter Product Name: ");
+        System.out.print("Enter Product Name (press Enter to return): ");
         String name = sanitizeString(scanner.nextLine());
+        if (name.isEmpty()) {
+            return null;
+        }
 
-        System.out.print("Enter Quantity: ");
+        System.out.print("Enter Quantity (press Enter to return): ");
         int quantity = readIntInput("quantity");
+        if (quantity == -1) {
+            return null;
+        }
 
-        System.out.print("Enter Price: ");
+        System.out.print("Enter Price (press Enter to return): ");
         BigDecimal price = readPriceInput();
+        if (price == null) {
+            return null;
+        }
 
         return new Product(id, name, quantity, price);
     }
 
-    private String displayAddProductMenu() {
+    private String displayAddAnotherProductMenu() {
         System.out.println("------------------------------------------------------------------");
         System.out.println("[1] Add Another Product");
         System.out.println("[2] Return to Main Menu");
@@ -235,9 +275,17 @@ public class InventoryUI {
         while (true) {
             try {
                 String input = sanitizeString(scanner.nextLine());
+                if (input.isEmpty()) {
+                    return -1;
+                }
+
+                if (Integer.parseInt(input) < 0) {
+                    throw new NumberFormatException("Negative numbers are not allowed!");
+                }
+
                 return Integer.parseInt(input);
             } catch (NumberFormatException e) {
-                System.out.print("Invalid " + fieldName + " — please enter a number: ");
+                System.out.print("Invalid " + fieldName + " — please enter again: ");
             }
         }
     }
@@ -247,82 +295,67 @@ public class InventoryUI {
         while (true) {
             try {
                 String input = sanitizeString(scanner.nextLine());
+
+                if (input.isEmpty()) {
+                    return null;
+                }
+
+                if (Integer.parseInt(input) < 0) {
+                    throw new Exception("Negative numbers are not allowed!");
+                }
+
                 return PriceUtils.toPrice(input);
             } catch (Exception e) {
                 System.out.print("Invalid price — please enter again: ");
             }
         }
     }
+    // endregion
 
     /* ------------------------------------- Update Products ------------------------------------- */
-    private void updateProduct() throws InterruptedException {
+    private void updateProduct() {
         boolean updating = true;
 
         while (updating) {
             clearConsole();
-            System.out.println("------------------------------------------------------------------");
-            System.out.println("UPDATE PRODUCT");
-            System.out.println("------------------------------------------------------------------");
+
+            printHeader("UPDATE PRODUCT");
 
             System.out.print("Enter Product ID to update (press Enter to return): ");
             String id = sanitizeString(scanner.nextLine());
-
+            System.out.println();
             if (id.isEmpty()) {
+                System.out.println("Returning to Main Menu...");
+                state = MenuState.MAIN_MENU;
                 break;
             }
 
-            System.out.println();
             Product product = inventory.searchProductById(id);
 
             if (product == null) {
-                System.out.println("Product ID " + "'" + id + "'" + " does not exists!");
-                System.out.println("Returning...");
-                Thread.sleep(2000);
+                System.out.println("Product not found!");
+                pause();
                 continue;
             }
 
-            System.out.println("------------------------------------------------------------------");
-            System.out.println("Current Information:\n");
-
-            System.out.println("Product ID: " + product.getId());
-            System.out.println("Product Name: " + product.getName());
-            System.out.println("Quantity: " + product.getQuantity());
-            System.out.println("Price: " + "$" + product.getPrice());
+            printCurrentInformation(product);
 
             System.out.println();
+            boolean updateSuccessfully = displayUpdateOptions(product);
 
-            // store the new details
-            System.out.println("Enter new quantity (or press Enter to skip): ");
-            String newQuantityInput = sanitizeString(scanner.nextLine());
-            int newQuantity = 0;
-            if (!(newQuantityInput.isEmpty())) {
-                newQuantity = Integer.parseInt(newQuantityInput);
+
+            if (!updateSuccessfully) { // returns to Main Menu if user choose to do so, or if invalid input were used
+                return;
             }
 
-            System.out.println("Enter new price (or press Enter to skip): ");
-            String newPriceInput = sanitizeString(scanner.nextLine());
-            BigDecimal newPrice = null;
-            if (!(newPriceInput.isEmpty())) {
-                newPrice = PriceUtils.toPrice(newPriceInput);
-            }
+            printCurrentInformation(product);
 
-            // update product details
-            if (newQuantity != 0) {
-                product.setQuantity(newQuantity);
-            }
-
-            if (newPrice != null) {
-                product.setPrice(newPrice);
-            }
-
-            System.out.println("------------------------------------------------------------------");
-            System.out.println("Product " + "'" + product.getName() + "' " + "updated successfully!");
-            Thread.sleep(2000);
-            System.out.println();
+            clearConsole();
+            printSeparator();
             System.out.println("[1] Update Another Product");
             System.out.println("[2] Return to Main Menu");
             System.out.println("[3] Exit Program");
-            System.out.println("------------------------------------------------------------------");
+            printSeparator();
             System.out.print("Select an option: ");
             String choice = sanitizeString(scanner.nextLine());
 
@@ -332,14 +365,133 @@ public class InventoryUI {
                 case "2" -> updating = false;
                 case "3" -> exitProgram();
                 default -> {
-                    System.out.println("Invalid option - Returning to Main Menu...");
-                    Thread.sleep(2000);
+                    System.out.println("Invalid option — Returning to Main Menu...");
+                    pause();
                     updating = false;
                 }
             }
         }
-
     }
+
+    private void printCurrentInformation(Product product) {
+        printSeparator();
+        System.out.println("Current Information:");
+        printSeparator();
+        System.out.println("Product ID: " + product.getId());
+        System.out.println("Product Name: " + product.getName());
+        System.out.println("Quantity: " + product.getQuantity());
+        System.out.println("Price: " + "$" + product.getPrice());
+        printSeparator();
+        pause();
+    }
+
+    private boolean displayUpdateOptions(Product product) {
+        // store the new details
+        printHeader("SELECT FIELD TO UPDATE");
+        System.out.println("[1] Update name");
+        System.out.println("[2] Update price");
+        System.out.println("[3] Update quantity");
+        System.out.println("[4] Increase quantity");
+        System.out.println("[5] Decrease quantity");
+        System.out.println("[6] Return to Main Menu");
+        System.out.println("[0] Exit Program");
+        printSeparator();
+        System.out.print("Select an option: ");
+        String choice = sanitizeString(scanner.nextLine());
+        printSeparator();
+
+        switch (choice) {
+            case "1" -> updateProductName(product);
+            case "2" -> updateProductPrice(product);
+            case "3" -> updateProductQuantity(product);
+            case "4" -> increaseProductQuantity(product);
+            case "5" -> decreaseProductQuantity(product);
+            case "6" -> {
+                return false;
+            }
+            case "0" -> exitProgram();
+            default -> {
+                System.out.println("Invalid option – Returning to Main Menu...");
+                pause();
+                return false;
+            }
+        }
+
+        System.out.println();
+        pause();
+
+        return true;
+    }
+
+    private void updateProductName(Product product) {
+        System.out.print("Enter new product name (press Enter to skip): ");
+        String newName = sanitizeStringName(scanner.nextLine());
+        if (newName.isEmpty()) {
+            return;
+        }
+
+        System.out.println();
+
+        product.setName(newName);
+        System.out.println("Product [" + product.getId() + "] name updated to '" + product.getName() + "'.");
+    }
+
+    private void updateProductPrice(Product product) {
+        System.out.print("Enter new product price (press Enter to skip): ");
+        BigDecimal newPrice = readPriceInput();
+
+        if (newPrice == null) {
+            return;
+        }
+
+        System.out.println();
+
+        product.setPrice(newPrice);
+        System.out.println("Product [" + product.getId() + "] price updated to '$" + product.getPrice() + "'.");
+    }
+
+    private void updateProductQuantity(Product product) {
+        System.out.print("Enter new quantity (press Enter to skip): ");
+        int newQuantity = readIntInput("quantity");
+
+        if (newQuantity == -1) {
+            return;
+        }
+
+        System.out.println();
+
+        product.setQuantity(newQuantity);
+        System.out.println("Product [" + product.getId() + "] quantity updated to '" + product.getQuantity() + "'.");
+    }
+
+    private void increaseProductQuantity(Product product) {
+        System.out.print("Enter quantity to add to current stock (press Enter to skip): ");
+        int amount = readIntInput("quantity");
+
+        if (amount == -1) {
+            return;
+        }
+
+        System.out.println();
+
+        product.increaseQuantity(amount);
+        System.out.println("Product [" + product.getId() + "] quantity updated to '" + product.getQuantity() + "'.");
+    }
+
+    private void decreaseProductQuantity(Product product) {
+        System.out.print("Enter quantity to subtract to current stock (press Enter to skip): ");
+        int amount = readIntInput("quantity");
+
+        if (amount == -1) {
+            return;
+        }
+
+        System.out.println();
+
+        product.decreaseQuantity(amount);
+        System.out.println("Product [" + product.getId() + "] quantity updated to '" + product.getQuantity() + "'.");
+    }
+
 
     /* ------------------------------------- Remove Products ------------------------------------- */
     private void removeProduct() throws InterruptedException {
@@ -405,7 +557,7 @@ public class InventoryUI {
     }
 
     /* ------------------------------------- Search Products ------------------------------------- */
-    private void searchProducts() throws InterruptedException {
+    private void searchProduct() throws InterruptedException {
         boolean searching = true;
         while (searching) {
             clearConsole();
@@ -513,6 +665,27 @@ public class InventoryUI {
                 .toLowerCase();
     }
 
+    // String sanitizer for names - to keep chosen capitalization
+    private static String sanitizeStringName(String string) {
+        if (string == null) {
+            return "";
+        }
+
+        return string
+                .trim()
+                .replaceAll("\\s+", " ")
+                .replaceAll("[^a-zA-Z0-9\\s\\-]", "");
+    }
+
+    private static void printSeparator() {
+        System.out.println("------------------------------------------------------------------");
+    }
+
+    private static void printHeader(String header) {
+        printSeparator();
+        System.out.println(header);
+        printSeparator();
+    }
 
     // pauses the console
     private void pause() {
@@ -520,7 +693,14 @@ public class InventoryUI {
         scanner.nextLine();
     }
 
-    private void exitProgram() {
+    // fake clear console
+    private static void clearConsole() {
+        for (int i = 0; i < 50; i++) {
+            System.out.println();
+        }
+    }
+
+    private static void exitProgram() {
         System.out.println("\nSaving data... done!");
         System.out.println("Thank you for using Inventory Manager!");
         System.out.println("Program closing...");

@@ -1,14 +1,7 @@
 package com.chaoswanderer.inventory.model;
 
-import com.chaoswanderer.inventory.model.Product;
-
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Inventory {
     private final Map<String, Product> inventory;
@@ -42,6 +35,14 @@ public class Inventory {
         return this.inventory.getOrDefault(id, null);
     }
 
+    public boolean productExists(Product product) {
+        return searchProductById(product.getId()) != null;
+    }
+
+    public boolean productExists(String id) {
+        return searchProductById(id) != null;
+    }
+
     public List<Product> searchProductsbyName(String name) {
         List<Product> matches = new ArrayList<>();
 
@@ -73,6 +74,8 @@ public class Inventory {
                 .toList();
     }
 
+
+    // ------------------------------------------------------
     public int getTotalProducts() {
         return inventory.size();
     }
