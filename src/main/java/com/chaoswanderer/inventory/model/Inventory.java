@@ -1,5 +1,7 @@
 package com.chaoswanderer.inventory.model;
 
+import com.chaoswanderer.inventory.util.SortField;
+
 import java.math.BigDecimal;
 import java.util.*;
 
@@ -72,17 +74,20 @@ public class Inventory {
     }
 
     // ------------------- Sort options -------------------
-    public List<Product> sortByName(boolean ascending) {
-        return inventory.values().stream()
-                .sorted(Comparator.comparing(Product::getName,
-                        (ascending) ? Comparator.naturalOrder() : Comparator.reverseOrder()))
-                .toList();
-    }
+    public List<Product> sortBy(SortField field, boolean ascending) {
+        Comparator<Product> comparator = switch (field) {
+            case NAME -> Comparator.comparing(Product::getName);
+            case PRICE -> Comparator.comparing(Product::getPrice);
+            case CREATED_AT -> Comparator.comparing(Product::getCreatedAt);
+            case UPDATED_AT -> Comparator.comparing(Product::getUpdatedAt);
+        };
 
-    public List<Product> sortByPrice(boolean ascending) {
+        if (!ascending) {
+            comparator = comparator.reversed();
+        }
+
         return inventory.values().stream()
-                .sorted(Comparator.comparing(Product::getPrice,
-                        (ascending) ? Comparator.naturalOrder() : Comparator.reverseOrder()))
+                .sorted(comparator)
                 .toList();
     }
 
