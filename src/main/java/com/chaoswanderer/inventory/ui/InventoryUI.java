@@ -100,6 +100,7 @@ public class InventoryUI {
         clearConsole();
         boolean viewing = true;
 
+        products = inventory.sortBy(SortField.CREATED_AT, false); // default list is sorted by CREATION DATE (NEWEST)
         while (viewing) {
 
             if (products == null) {
@@ -169,8 +170,10 @@ public class InventoryUI {
         System.out.println(printSeparator('-'));
         System.out.println("SORT OPTIONS");
         System.out.println(printSeparator('-'));
+        System.out.println("[A] Sort by ID (Ascending)");
+        System.out.println("[B] Sort by ID (Descending)");
         System.out.println("[1] Sort by Name (Ascending)");
-        System.out.println("[2] Sort by Name (Descending");
+        System.out.println("[2] Sort by Name (Descending)");
         System.out.println("[3] Sort by Price (Lowest to Highest)");
         System.out.println("[4] Sort by Price (Highest to Lowest)");
         System.out.println("[5] Sort by Creation Date (Newest First)");
@@ -193,17 +196,21 @@ public class InventoryUI {
     }
 
     // returns the sorted list based on choice from handleSortOptions()
+    // default order is sorted by Creation Date (Newest)
     private List<Product> getSortedList(String choice, List<Product> products) {
+
         return switch (choice) {
+            case "a" -> inventory.sortBy(SortField.ID, true);
+            case "b" -> inventory.sortBy(SortField.ID, false);
             case "1" -> inventory.sortBy(SortField.NAME, true);
             case "2" -> inventory.sortBy(SortField.NAME, false);
             case "3" -> inventory.sortBy(SortField.PRICE, true);
             case "4" -> inventory.sortBy(SortField.PRICE, false);
-            case "5" -> inventory.sortBy(SortField.CREATED_AT, true);
-            case "6" -> inventory.sortBy(SortField.CREATED_AT, false);
-            case "7" -> inventory.sortBy(SortField.UPDATED_AT, true);
-            case "8" -> inventory.sortBy(SortField.UPDATED_AT, false);
-            case "9" -> inventory.getAllProducts();
+            case "5" -> inventory.sortBy(SortField.CREATED_AT, false); // newest first
+            case "6" -> inventory.sortBy(SortField.CREATED_AT, true);
+            case "7" -> inventory.sortBy(SortField.UPDATED_AT, false); // newest first
+            case "8" -> inventory.sortBy(SortField.UPDATED_AT, true);
+            case "9" -> inventory.sortBy(SortField.CREATED_AT, false); // return newest first list as default
             case "0" -> { // Return to Main Menu option
                 state = MenuState.MAIN_MENU;
                 yield null;

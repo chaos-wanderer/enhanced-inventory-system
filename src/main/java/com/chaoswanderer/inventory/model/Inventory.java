@@ -76,6 +76,7 @@ public class Inventory {
     // ------------------- Sort options -------------------
     public List<Product> sortBy(SortField field, boolean ascending) {
         Comparator<Product> comparator = switch (field) {
+            case ID -> Comparator.comparing(Product::getId);
             case NAME -> Comparator.comparing(Product::getName);
             case PRICE -> Comparator.comparing(Product::getPrice);
             case CREATED_AT -> Comparator.comparing(Product::getCreatedAt);
@@ -90,9 +91,8 @@ public class Inventory {
                 .sorted(comparator)
                 .toList();
     }
-
-
     // ------------------------------------------------------
+
     public int getTotalProducts() {
         return inventory.size();
     }
