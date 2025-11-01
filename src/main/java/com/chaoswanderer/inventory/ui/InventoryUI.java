@@ -2,8 +2,9 @@ package com.chaoswanderer.inventory.ui;
 
 import com.chaoswanderer.inventory.model.Inventory;
 import com.chaoswanderer.inventory.model.Product;
+import com.chaoswanderer.inventory.service.InventoryService;
+import com.chaoswanderer.inventory.util.InventoryUtils;
 import com.chaoswanderer.inventory.util.MenuState;
-import com.chaoswanderer.inventory.util.PriceUtils;
 import com.chaoswanderer.inventory.util.SortField;
 
 import java.math.BigDecimal;
@@ -12,11 +13,13 @@ import java.util.Scanner;
 
 public class InventoryUI {
     private final Inventory inventory;
+    private final InventoryService inventoryService;
     private Scanner scanner;
     private MenuState state = MenuState.MAIN_MENU;
 
-    public InventoryUI(Inventory inventory, Scanner scanner) {
+    public InventoryUI(Inventory inventory, InventoryService inventoryService, Scanner scanner) {
         this.inventory = inventory;
+        this.inventoryService = inventoryService;
         this.scanner = scanner;
     }
 
@@ -68,7 +71,7 @@ public class InventoryUI {
         System.out.println("[0] Exit");
         System.out.println(printSeparator('-'));
         System.out.print("Select an option: ");
-        String choice = sanitizeString(scanner.nextLine());
+        String choice = InventoryUtils.sanitizeString(scanner.nextLine());
 
         if (choice.equals("0")) {
             state = MenuState.EXIT_PROGRAM;
@@ -162,7 +165,7 @@ public class InventoryUI {
         System.out.println(printSeparator('-'));
         System.out.print("Select an option: ");
 
-        return sanitizeString(scanner.nextLine());
+        return InventoryUtils.sanitizeString(scanner.nextLine());
     }
 
     // handles sort options
@@ -185,7 +188,7 @@ public class InventoryUI {
         System.out.println("[X] Exit Program");
         System.out.println(printSeparator('-'));
         System.out.print("Select an option: ");
-        String choice = sanitizeString(scanner.nextLine());
+        String choice = InventoryUtils.sanitizeString(scanner.nextLine());
 
         if (choice.equals("0")) {
             state = MenuState.EXIT_PROGRAM;
@@ -280,13 +283,13 @@ public class InventoryUI {
 
     private Product promptForProductDetails() {
         System.out.print("Enter Product ID (press Enter to return): ");
-        String id = sanitizeString(scanner.nextLine());
+        String id = InventoryUtils.sanitizeString(scanner.nextLine());
         if (id.isEmpty()) {
             return null;
         }
 
         System.out.print("Enter Product Name (press Enter to return): ");
-        String name = sanitizeString(scanner.nextLine());
+        String name = InventoryUtils.sanitizeStringName(scanner.nextLine());
         if (name.isEmpty()) {
             return null;
         }
@@ -313,14 +316,14 @@ public class InventoryUI {
         System.out.println("[3] Exit Program");
         System.out.println("------------------------------------------------------------------");
         System.out.print("Select an option: ");
-        return sanitizeString(scanner.nextLine());
+        return InventoryUtils.sanitizeString(scanner.nextLine());
     }
 
     // prevents invalid inputs for quantity field
     private int readIntInput(String fieldName) {
         while (true) {
             try {
-                String input = sanitizeString(scanner.nextLine());
+                String input = InventoryUtils.sanitizeString(scanner.nextLine());
                 if (input.isEmpty()) {
                     return -1;
                 }
@@ -340,17 +343,18 @@ public class InventoryUI {
     private BigDecimal readPriceInput() {
         while (true) {
             try {
-                String input = sanitizeString(scanner.nextLine());
+                String input = scanner.nextLine().trim();
 
                 if (input.isEmpty()) {
                     return null;
                 }
 
-                if (Integer.parseInt(input) < 0) {
+                BigDecimal value = new BigDecimal(input);
+                if (value.compareTo(BigDecimal.ZERO) < 0) {
                     throw new Exception("Negative numbers are not allowed!");
                 }
 
-                return PriceUtils.toPrice(input);
+                return InventoryUtils.toPrice(input);
             } catch (Exception e) {
                 System.out.print("Invalid price — please enter again: ");
             }
@@ -369,7 +373,7 @@ public class InventoryUI {
             printHeader("UPDATE PRODUCT");
 
             System.out.print("Enter Product ID to update (press Enter to return): ");
-            String id = sanitizeString(scanner.nextLine());
+            String id = InventoryUtils.sanitizeString(scanner.nextLine());
             if (id.isEmpty()) {
                 System.out.println("Returning to Main Menu...");
                 state = MenuState.MAIN_MENU;
@@ -403,7 +407,7 @@ public class InventoryUI {
             System.out.println("[3] Exit Program");
             System.out.println(printSeparator('-'));
             System.out.print("Select an option: ");
-            String choice = sanitizeString(scanner.nextLine());
+            String choice = InventoryUtils.sanitizeString(scanner.nextLine());
 
             switch (choice) {
                 case "1" -> state = MenuState.UPDATE_PRODUCT;
@@ -448,7 +452,7 @@ public class InventoryUI {
         System.out.println("[0] Exit Program");
         System.out.println(printSeparator('-'));
         System.out.print("Select an option: ");
-        String choice = sanitizeString(scanner.nextLine());
+        String choice = InventoryUtils.sanitizeString(scanner.nextLine());
         System.out.println(printSeparator('-'));
 
         switch (choice) {
@@ -480,7 +484,7 @@ public class InventoryUI {
 
     private void updateProductName(Product product) {
         System.out.print("Enter new product name (press Enter to skip): ");
-        String newName = sanitizeStringName(scanner.nextLine());
+        String newName = InventoryUtils.sanitizeStringName(scanner.nextLine());
         if (newName.isEmpty()) {
             return;
         }
@@ -579,7 +583,7 @@ public class InventoryUI {
             printHeader("REMOVE PRODUCT");
 
             System.out.print("Enter Product ID to remove (press Enter to return): ");
-            String id = sanitizeString(scanner.nextLine());
+            String id = InventoryUtils.sanitizeString(scanner.nextLine());
 
             if (id.isEmpty()) {
                 state = MenuState.MAIN_MENU;
@@ -633,7 +637,7 @@ public class InventoryUI {
 
     private boolean displayRemoveProductConfirmation(Product product) {
         System.out.print("Are you sure you want to remove " + "[" + product.getId() + "] " + "'" + product.getName() + "' ? (y/n): ");
-        String choice = sanitizeString(scanner.nextLine());
+        String choice = InventoryUtils.sanitizeString(scanner.nextLine());
 
         if (choice.equals("y")) {
             this.inventory.removeProduct(product.getId());
@@ -650,7 +654,7 @@ public class InventoryUI {
         System.out.println("[3] Exit Program");
         System.out.println("------------------------------------------------------------------");
         System.out.print("Select an option: ");
-        return sanitizeString(scanner.nextLine());
+        return InventoryUtils.sanitizeString(scanner.nextLine());
     }
 
     // endregion
@@ -729,7 +733,7 @@ public class InventoryUI {
         System.out.println("[4] Exit Program");
         System.out.println(printSeparator('-'));
         System.out.print("Select an option: ");
-        String choice = sanitizeString(scanner.nextLine());
+        String choice = InventoryUtils.sanitizeString(scanner.nextLine());
 
         System.out.println(printSeparator('-'));
         return choice;
@@ -763,7 +767,7 @@ public class InventoryUI {
     // return value used for handleSearchMenu()
     private boolean searchProductsById() {
         System.out.print("Enter Product ID (press Enter to return): ");
-        String id = sanitizeString(scanner.nextLine());
+        String id = InventoryUtils.sanitizeString(scanner.nextLine());
 
         if (id.isEmpty()) {
             return true;
@@ -777,7 +781,7 @@ public class InventoryUI {
 
     private boolean searchProductsByName() {
         System.out.print("Enter keyword (press Enter to return): ");
-        String name = sanitizeString(scanner.nextLine());
+        String name = InventoryUtils.sanitizeString(scanner.nextLine());
 
         if (name.isEmpty()) {
             return true;
@@ -810,7 +814,7 @@ public class InventoryUI {
         System.out.println(printSeparator('-'));
         System.out.print("Select an option: ");
 
-        return sanitizeString(scanner.nextLine());
+        return InventoryUtils.sanitizeString(scanner.nextLine());
     }
 
     // endregion
@@ -828,7 +832,7 @@ public class InventoryUI {
         System.out.println("[2] Exit Program");
         System.out.println(printSeparator('-'));
         System.out.print("Select an option: ");
-        String choice = sanitizeString(scanner.nextLine());
+        String choice = InventoryUtils.sanitizeString(scanner.nextLine());
 
         switch (choice) {
             case "1" -> {
@@ -848,33 +852,10 @@ public class InventoryUI {
 
     //region Utility Methods
     /* ------------------------------------- Utility Methods ------------------------------------- */
-    private static String sanitizeString(String string) {
-        if (string == null) {
-            return "";
-        }
-
-        return string
-                .trim()
-                .replaceAll("\\s+", " ")
-                .replaceAll("[^a-zA-Z0-9\\s\\-]", "")
-                .toLowerCase();
-    }
-
-    // String sanitizer for names - to keep chosen capitalization
-    private static String sanitizeStringName(String string) {
-        if (string == null) {
-            return "";
-        }
-
-        return string
-                .trim()
-                .replaceAll("\\s+", " ")
-                .replaceAll("[^a-zA-Z0-9\\s\\-]", "");
-    }
 
     private boolean getConfirmation() {
         System.out.print("Are you sure (y/n): ");
-        return sanitizeString(scanner.nextLine()).equals("y");
+        return InventoryUtils.sanitizeString(scanner.nextLine()).equals("y");
     }
 
     private static String printSeparator(char character) {
@@ -900,8 +881,16 @@ public class InventoryUI {
         }
     }
 
-    private static void exitProgram() {
-        System.out.println("\nSaving data... done!");
+    private void exitProgram() {
+        System.out.println("\nSaving data...");
+        boolean success = inventoryService.saveProductsToFile();
+
+        if (success) {
+            System.out.println("Data saved successfully!");
+        } else {
+            System.out.println("Failed to save data!");
+        }
+
         System.out.println("Thank you for using Inventory Manager!");
         System.out.println("Program closing...");
         System.exit(0);
