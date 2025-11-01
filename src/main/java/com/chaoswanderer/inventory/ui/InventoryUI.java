@@ -27,7 +27,7 @@ public class InventoryUI {
                 case UPDATE_PRODUCT -> updateProduct();
                 case REMOVE_PRODUCT -> removeProduct();
                 case SEARCH_PRODUCT -> searchProduct();
-//                case DISPLAY_SUMMARY -> displaySummary();
+                case DISPLAY_SUMMARY -> displaySummary();
                 case EXIT_PROGRAM -> {
                     exitProgram();
                     return;
@@ -67,7 +67,7 @@ public class InventoryUI {
             case "3" -> state = MenuState.UPDATE_PRODUCT;
             case "4" -> state = MenuState.REMOVE_PRODUCT;
             case "5" -> state = MenuState.SEARCH_PRODUCT;
-//            case "6" -> displaySummary();
+            case "6" -> state = MenuState.DISPLAY_SUMMARY;
             default -> {
                 System.out.println("\nInvalid input - Returning...");
                 pause();
@@ -774,31 +774,30 @@ public class InventoryUI {
 
     // region Display Summary
     /* ------------------------------------- Display Summary ------------------------------------- */
-    private void displaySummary() throws InterruptedException {
+    private void displaySummary() {
         clearConsole();
-        System.out.println("------------------------------------------------------------------");
-        System.out.println("INVENTORY SUMMARY");
-        System.out.println("------------------------------------------------------------------");
+        printHeader("INVENTORY SUMMARY");
         System.out.println("Total Products: " + inventory.getTotalProducts());
         System.out.println("Total Stock Quantity: " + inventory.getTotalStockQuantity());
         System.out.println("Total Inventory Value: " + "$" + inventory.getTotalInventoryValue());
-        System.out.println("------------------------------------------------------------------");
+        printSeparator();
         System.out.println("[1] Return to Main Menu");
         System.out.println("[2] Exit Program");
-        System.out.println("------------------------------------------------------------------");
+        printSeparator();
         System.out.print("Select an option: ");
         String choice = sanitizeString(scanner.nextLine());
 
         switch (choice) {
             case "1" -> {
+                state = MenuState.MAIN_MENU;
             }
             case "2" -> {
                 state = MenuState.EXIT_PROGRAM;
-                exitProgram();
             }
             default -> {
-                System.out.println("Invalid option - Returning to Main Menu...");
-                Thread.sleep(2000);
+                System.out.println("\nInvalid option - Returning to Main Menu...");
+                state = MenuState.MAIN_MENU;
+                pause();
             }
         }
     }
