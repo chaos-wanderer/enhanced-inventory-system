@@ -21,7 +21,6 @@ public class Main {
         pause(scanner);
 
         //TODO add InventoryController?
-        //TODO add createdAt and updatedAt in data/products.csv
 
         InventoryUI ui = new InventoryUI(inventory, inventoryService, scanner);
         ui.start();

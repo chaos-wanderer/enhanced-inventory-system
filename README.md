@@ -1,10 +1,14 @@
-A simple project created for the application of concepts and knowledge I've learned from completing University of Helsinki's Massive Open Online Course (MOOC) on Java Programming I & II.
+A simple project created for the application of concepts and knowledge I've learned from completing University of
+Helsinki's Massive Open Online Course (MOOC) on Java Programming I & II.
 
-• An enhanced version of [No Database Inventory Management](https://github.com/chaos-wanderer/no-database-inventory-system)
+• An enhanced version
+of [No Database Inventory Management](https://github.com/chaos-wanderer/no-database-inventory-system)
 
 • Simple inventory management system with basic features
 
 • No database implemented
+
+• Allows loading and saving products from file (located at 'data/products.csv')
 
 • Pure CLI-based application (No GUI)
 
@@ -12,4 +16,7 @@ A simple project created for the application of concepts and knowledge I've lear
 
 • Developed for learning purposes only — not intended for real-world use
 
-Note: The application does not fully handle all invalid or unexpected user inputs. Input validation is limited and assumes correct usage.
+Note: The application does not fully handle all invalid or unexpected user inputs. Input validation is limited and
+assumes correct usage.
+
+TODO: Refactor the code by breaking down the UI, create InventoryController to handle request from UI and InventoryService
